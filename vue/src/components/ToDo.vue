@@ -42,7 +42,7 @@
                 </td>
                 <td class="border px-4 py-2">
                     <button
-                        @click="deleteTodo(todo.id)"
+                        @click="deleteTodo(todo)"
                     >
                         Delete
                     </button>
@@ -52,7 +52,7 @@
         </table>
 
         <button
-            @click="addTodo"
+            @click="newRow"
             class="mt-4"
         >
             Add Todo
@@ -68,89 +68,62 @@
 </template>
 
 <script>
-import axios from "axios";
+import { useTodoListStore } from "../stores/todoStore";
+import { computed, nextTick } from "vue";
 
 export default {
-    data() {
-        return {
-            todos: [],
-            notifications: [],
+    setup() {
+        const store = useTodoListStore();
+        const todos = computed(() => store.todos);
+        const notifications = computed(() => store.notifications);
+
+        const newRow = async () => {
+            store.addNewLine();
+
+            await nextTick();
+            document.querySelector('input[autofocus]').focus();
         };
-    },
-    name: 'ToDo',
-    methods: {
-        async fetchTodos() {
-            const response = await axios.get("/todos");
-            this.todos = response.data;
-        },
-        addTodo() {
-            this.todos.push({
-                id: null,
-                title: "",
-                description: "",
-                status: "To do",
-                isCreating: true,
-            });
 
-            this.$nextTick(() => {
-                document.querySelector('input[autofocus]').focus();
-            });
-        },
-        async handleRowBlur(todo, index) {
-            if (!this.todos.includes(todo)) {
-                return;
-            }
-
+        const handleRowBlur = async (todo, index) => {
             if (todo.isCreating && !todo.id) {
                 if (!todo.title.trim()) {
-                    this.todos.splice(index, 1);
+                    store.todos.splice(index, 1);
                     return;
                 }
 
-                try {
-                    const response = await axios.post("/todos", {
-                        title: todo.title,
-                        description: todo.description,
-                        status: todo.status,
-                    });
+                await store.addTodo({
+                    title: todo.title,
+                    description: todo.description,
+                    status: todo.status,
+                });
 
-                    todo.isCreating = false;
-                    this.todos[index] = response.data.todo;
-                    this.showNotification(response.data.message);
-                } catch (error) {
-                    this.showNotification(error.response.data.message);
-                }
+                todo.isCreating = false;
+            }
 
+            if (!todo.isCreating && !todo.isDeleted && todo.id) {
+                await store.updateTodo({
+                    id: todo.id,
+                    title: todo.title,
+                    description: todo.description,
+                    status: todo.status,
+                });
             }
-            if (!todo.isCreating && todo.id) {
-                try {
-                    const response = await axios.put(`/todos/${todo.id}`, todo);
-                    this.showNotification(response.data.message);
-                } catch (error) {
-                    this.showNotification(error.response.data.message);
-                }
-            }
-        },
-        async deleteTodo(id) {
-            try {
-                const response = await axios.delete(`/todos/${id}`);
-                this.todos = this.todos.filter((todo) => todo.id !== id);
-                this.showNotification(response.data.message);
-            } catch (error) {
-                this.showNotification(error.response.data.message);
-            }
-        },
-        showNotification(message) {
-            if (message) {
-                this.notifications.push(message);
-                setTimeout(() => {
-                    this.notifications.shift();
-                }, 3000);
-            }
-        },
-    },
-    mounted() {
-        this.fetchTodos();
+        };
+
+        const deleteTodo = (todo) => {
+            store.deleteTodo(todo.id);
+            todo.isDeleted = true;
+        };
+
+        store.fetchTodos();
+
+        return {
+            todos,
+            notifications,
+            newRow,
+            handleRowBlur,
+            deleteTodo,
+        };
     },
 };
 </script>
