@@ -8,3 +8,4 @@ Route::get('/', function () {
 });
 
 Route::resource('todos', TodoController::class);
+Route::post('todos/export', [TodoController::class, 'exportTodos']);

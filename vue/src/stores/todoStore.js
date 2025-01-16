@@ -52,6 +52,14 @@ export const useTodoListStore = defineStore("todoList", {
                 this.showNotification(error.response.data.message);
             }
         },
+        async exportTodos() {
+            try {
+                const response = await axios.post("/todos/export");
+                this.showNotification(response.data.message);
+            } catch (error) {
+                this.showNotification(error.response.data.message);
+            }
+        },
         showNotification(message) {
             if (message) {
                 this.notifications.push(message);

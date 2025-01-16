@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Services\TodoService;
+use App\Jobs\MailReport;
 use App\Models\Todo;
 use Illuminate\Http\Request;
 
@@ -52,6 +53,20 @@ class TodoController extends Controller
             $todo->delete();
             return response()->json([
                 'message' => "Todo deleted successfully!"
+            ]);
+        } catch (\Exception $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], responseStatusCode($exception->getCode()));
+        }
+    }
+
+    public function exportTodos()
+    {
+        try {
+            MailReport::dispatch();
+            return response()->json([
+                'message' => "Report sent to email successfully!"
             ]);
         } catch (\Exception $exception) {
             return response()->json([

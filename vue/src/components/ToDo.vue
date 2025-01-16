@@ -53,9 +53,16 @@
 
         <button
             @click="newRow"
-            class="mt-4"
+            class="mt-4 mr-2"
         >
             Add Todo
+        </button>
+
+        <button
+            @click="exportTodos"
+            class="mt-4 ml-2"
+        >
+            Export Todos
         </button>
 
         <div
@@ -76,6 +83,10 @@ export default {
         const store = useTodoListStore();
         const todos = computed(() => store.todos);
         const notifications = computed(() => store.notifications);
+
+        const exportTodos = () => {
+            store.exportTodos();
+        };
 
         const newRow = async () => {
             store.addNewLine();
@@ -120,6 +131,7 @@ export default {
         return {
             todos,
             notifications,
+            exportTodos,
             newRow,
             handleRowBlur,
             deleteTodo,
